@@ -32,11 +32,6 @@ public class ReadyEventResponse {
 	public String session_id;
 
 	/**
-	 * The read state for each channel by the user
-	 */
-	public ReadStateResponse[] read_state;
-
-	/**
 	 * The private channels the user is connected to
 	 */
 	public PrivateChannelResponse[] private_channels;
@@ -54,7 +49,7 @@ public class ReadyEventResponse {
 	/**
 	 * Represents a user's client settings
 	 */
-	public class UserSettingsResponse {
+	public static class UserSettingsResponse {
 
 		/**
 		 * Currently either "light" or "dark"
@@ -110,7 +105,7 @@ public class ReadyEventResponse {
 	/**
 	 * Represents a user's settings for a guild
 	 */
-	public class UserGuildSettingsResponse {
+	public static class UserGuildSettingsResponse {
 
 		/**
 		 * Whether to suppress @everyone notifications
@@ -170,26 +165,5 @@ public class ReadyEventResponse {
 			 */
 			public String channel_id;
 		}
-	}
-
-	/**
-	 * Object representing a channel's read state by the user
-	 */
-	public class ReadStateResponse {
-
-		/**
-		 * Number of times the user has been mentioned on the channel
-		 */
-		public int mention_count;
-
-		/**
-		 * The last message read by the user
-		 */
-		public String last_message_id;
-
-		/**
-		 * The channel id
-		 */
-		public String id;
 	}
 }

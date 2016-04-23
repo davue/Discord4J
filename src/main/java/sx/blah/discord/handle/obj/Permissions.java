@@ -83,7 +83,7 @@ public enum Permissions {
 	/**
 	 * Allows the user to globally mute users in a voice channel.
 	 */
-	VOICE_MUTE_MEMEBERS(22),
+	VOICE_MUTE_MEMBERS(22),
 	/**
 	 * Allows the user to globally deafen users in a voice channel.
 	 */
@@ -100,7 +100,7 @@ public enum Permissions {
 	/**
 	 * The bit offset in the permissions number
 	 */
-	public int offset;
+	private final int offset;
 
 	Permissions(int offset) {
 		this.offset = offset;

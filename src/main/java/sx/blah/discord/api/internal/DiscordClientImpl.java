@@ -206,9 +206,6 @@ public final class DiscordClientImpl implements IDiscordClient {
 			if (ws != null) {
 				ws.disconnect(DiscordDisconnectedEvent.Reason.RECONNECTING);
 
-				for (DiscordVoiceWS vws : voiceConnections.values())
-					vws.disconnect(VoiceDisconnectedEvent.Reason.RECONNECTING);
-
 				lastSequence = 0;
 				sessionId = null; //Prevents the websocket from sending a resume request.
 			}
@@ -428,13 +425,15 @@ public final class DiscordClientImpl implements IDiscordClient {
 					new StringEntity(DiscordUtils.GSON.toJson(new PrivateChannelRequest(user.getID()))),
 					new BasicNameValuePair("authorization", this.token),
 					new BasicNameValuePair("content-type", "application/json")), PrivateChannelResponse.class);
+
+			IPrivateChannel channel = DiscordUtils.getPrivateChannelFromJSON(this, response);
+			privateChannels.add(channel);
+			return channel;
 		} catch (UnsupportedEncodingException e) {
 			Discord4J.LOGGER.error("Error creating creating a private channel!", e);
 		}
 
-		IPrivateChannel channel = DiscordUtils.getPrivateChannelFromJSON(this, response);
-		privateChannels.add(channel);
-		return channel;
+		return null;
 	}
 
 	@Override
