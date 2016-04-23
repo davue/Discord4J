@@ -91,7 +91,7 @@ public class ServiceUtil {
             // addURL(URL) method instead by using getClass().getSuperClass() (which gives us the URLClassLoader
             // instead of the ExtLoader) however, I chose to use the ExtLoader method because JVM implementation may
             // change in the future.
-            Method addExtUrl = extentionLoader.getClass().getDeclaredMethod("addExtURL", URL.class);
+            Method addExtUrl = extentionLoader.getClass().getDeclaredMethod("addURL", URL.class);
 
             //Make the method public accessible.
             addExtUrl.setAccessible(true);
