@@ -435,14 +435,17 @@ public class DiscordWS {
 				Discord4J.LOGGER.debug("Message from: {} ({}) in channel ID {}: {}", message.getAuthor().getName(),
 						event.author.id, event.channel_id, event.content);
 
-				if (event.content.contains("discord.gg/")) {
-					String inviteCode = event.content.split("discord\\.gg/")[1].split(" ")[0];
-					Discord4J.LOGGER.debug("Received invite code \"{}\"", inviteCode);
-					client.dispatcher.dispatch(new InviteReceivedEvent(client.getInviteForCode(inviteCode), message));
-				} else if (event.content.contains("discordapp.com/invite/")) {
-					String inviteCode = event.content.split("discordapp\\.com/invite/")[1].split(" ")[0];
-					Discord4J.LOGGER.debug("Received invite code \"{}\"", inviteCode);
-					client.dispatcher.dispatch(new InviteReceivedEvent(client.getInviteForCode(inviteCode), message));
+				Optional<List<String>> invites = DiscordUtils.getInviteCodesFromMessage(event.content);
+				if (invites.isPresent()) {
+					String[] inviteCodes = invites.get().toArray(new String[invites.get().size()]);
+					Discord4J.LOGGER.debug("Received invite codes \"{}\"", (Object) inviteCodes);
+					List<IInvite> inviteObjects = new ArrayList<>();
+					for (int i = 0; i < inviteCodes.length; i++) {
+						IInvite invite = client.getInviteForCode(inviteCodes[i]);
+						if (invite != null)
+							inviteObjects.add(invite);
+					}
+					client.dispatcher.dispatch(new InviteReceivedEvent(inviteObjects.toArray(new IInvite[inviteObjects.size()]), message));
 				}
 
 				if (mentioned) {
@@ -575,6 +578,12 @@ public class DiscordWS {
 				&& presences != null) {
 			User user = (User) guild.getUserByID(event.user.id);
 			if (user != null) {
+				if (event.user.username != null) { //Full object was sent so there is a user change, otherwise all user fields but id would be null
+					IUser oldUser = user.copy();
+					user = DiscordUtils.getUserFromJSON(client, event.user);
+					client.dispatcher.dispatch(new UserUpdateEvent(oldUser, user));
+				}
+
 				if (!user.getPresence().equals(presences)) {
 					Presences oldPresence = user.getPresence();
 					user.setPresence(presences);
@@ -586,12 +595,6 @@ public class DiscordWS {
 					user.setGame(Optional.ofNullable(gameName));
 					client.dispatcher.dispatch(new GameChangeEvent(guild, user, oldGame, Optional.ofNullable(gameName)));
 					Discord4J.LOGGER.debug("User \"{}\" changed game to {}.", user.getName(), gameName);
-				}
-				User newUser = (User) client.getUserByID(event.user.id);
-				if (newUser != null) {
-					IUser oldUser = newUser.copy();
-					newUser = DiscordUtils.getUserFromJSON(client, event.user);
-					client.dispatcher.dispatch(new UserUpdateEvent(oldUser, newUser));
 				}
 			}
 		}
@@ -797,10 +800,18 @@ public class DiscordWS {
 				if (channel != oldChannel) {
 					if (channel == null) {
 						client.dispatcher.dispatch(new UserVoiceChannelLeaveEvent(user, oldChannel));
+						if (client.getOurUser().equals(user))
+							client.connectedVoiceChannels.remove(oldChannel);
 					} else if (oldChannel == null) {
 						client.dispatcher.dispatch(new UserVoiceChannelJoinEvent(user, channel));
+						if (client.getOurUser().equals(user))
+							client.connectedVoiceChannels.add(channel);
 					} else {
 						client.dispatcher.dispatch(new UserVoiceChannelMoveEvent(user, oldChannel, channel));
+						if (client.getOurUser().equals(user)) {
+							client.connectedVoiceChannels.remove(oldChannel);
+							client.connectedVoiceChannels.add(channel);
+						}
 					}
 				} else {
 					client.dispatcher.dispatch(new UserVoiceStateUpdateEvent(user, channel, event.self_mute, event.self_deaf, event.mute, event.deaf, event.suppress));
